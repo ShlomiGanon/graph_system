@@ -1,0 +1,44 @@
+# Build folders
+x64/
+Debug/
+Release/
+
+# Visual Studio temporary files
+.vs/
+
+# Build outputs and intermediates
+*.exe
+*.dll
+*.obj
+*.lib
+*.pdb
+*.idb
+*.ipch
+*.ilk
+*.log
+*.tlog
+*.cache
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
+
+# Windows system files
+Thumbs.db
+ehthumbs.db
+
+# NuGet packages folder (if any)
+packages/
+
+# Test results
+TestResults/
+
+# Resharper caches (if used)
+_ReSharper*/
