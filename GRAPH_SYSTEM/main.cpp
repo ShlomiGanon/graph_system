@@ -54,6 +54,13 @@ int main()
 		std::cout << "\nTotal weight: " << sum << "\n";
 	}
 
+	std::cout << "Dijastra: " << std::endl;
+	for (auto u : g.Dijastra("1"))
+	{
+		if(u == Graph::INFINITE_DISTANCE)std::cout <<  "inf, ";
+		else std::cout << u << ", ";
+	}
+	std::cout << std::endl;
 	return 0;
 }
 

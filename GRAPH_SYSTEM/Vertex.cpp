@@ -1,4 +1,4 @@
-#include "Vertecie.h"
+#include "Vertex.h"
 Vertex::Vertex(const std::string& name , int initial_in_edges , int initial_out_edges) : name(name)
 {
 	In_Edges.reserve(initial_in_edges);

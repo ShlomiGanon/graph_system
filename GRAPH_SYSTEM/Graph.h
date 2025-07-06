@@ -1,12 +1,6 @@
 #pragma once
-#include "Vertecie.h"
-#include <sstream>
-#include <stdexcept>
-#include <iostream>
-#include <stack>
-#include <unordered_map>
-#include <queue>
-#include <list>
+#include "Vertex.h"
+
 
 
 struct Graph_Exception : public std::runtime_error
@@ -66,6 +60,8 @@ public:
 	std::vector<double> Bellman_Ford(const std::string& source)const;
 	std::vector<std::vector<double>> Floyd_Warshall()const;
 	std::vector< std::vector<double>> Johnson()const;
+
+	//double GetMaxFlow()const;
 
 	friend std::ostream& operator<<(std::ostream& out, const Graph& g);
 };

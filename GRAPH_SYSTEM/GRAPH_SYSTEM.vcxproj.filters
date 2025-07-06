@@ -15,30 +15,36 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GRAPH_SYSTEM\BasesConverters.h">
+    <ClInclude Include="BasesConverters.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GRAPH_SYSTEM\Graph.h">
+    <ClInclude Include="Graph.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GRAPH_SYSTEM\Vertecie.h">
+    <ClInclude Include="ProjectIncludes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="GRAPH_SYSTEM\VerteciesSet.h">
+    <ClInclude Include="Vertex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VerteciesSet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Heap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="GRAPH_SYSTEM\Graph.cpp">
+    <ClCompile Include="Graph.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GRAPH_SYSTEM\Vertecie.cpp">
+    <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GRAPH_SYSTEM\VerteciesSet.cpp">
+    <ClCompile Include="Vertex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GRAPH_SYSTEM\main.cpp">
+    <ClCompile Include="VerteciesSet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,4 +1,5 @@
 ﻿#include "Graph.h"
+#include "Heap.h"
 
 
 // Constructor: initializes graph with given 'both_ways' flag and reserves space for vertices
@@ -659,69 +660,73 @@ std::vector<std::pair<Vertex*, std::vector<std::pair<Vertex*, double>>::iterator
 
 std::vector<double> Graph::Dijastra(const std::string& source) const
 {
-	std::unordered_map<const Vertex*, double> dist;     // Stores the shortest distance from source to each vertex
-	std::unordered_map<const Vertex*, bool> visited;    // Tracks whether a vertex was already visited
+	// Maps: vertex → distance  |  vertex → visited flag
+	std::unordered_map<const Vertex*, double> dist;
+	std::unordered_map<const Vertex*, bool>   visited;
 
-	Vertex* source_vertex = GetVertex(source);          // Get pointer to the source vertex by name
+	// Locate the source vertex
+	Vertex* source_vertex = GetVertex(source);
 	if (source_vertex == nullptr)
-		throw Graph_Exception("cant find the vertex: " + source); // Throw an exception if the source vertex is not found
+		throw Graph_Exception("cant find the vertex: " + source);
 
-	dist.reserve(m_vertices.size()); // Reserve space for all vertices in the distance map
+	// Pre‑allocate hash tables
+	dist.reserve(m_vertices.size());
+	visited.reserve(m_vertices.size());
 
-	// Initialize distances and visited map
-	for (auto v : m_vertices)
+	// User‑defined min‑heap: key = vertex*, value = current distance
+	Heap<const Vertex*, double> minHeap(MIN_HEAP, m_vertices.size());
+
+	// Initialization: set distance(source) = 0, others = ∞
+	for (const Vertex* v : m_vertices)
 	{
-		dist[v] = (v == source_vertex) ? 0 : INFINITE_DISTANCE; // Distance is 0 for source, infinite for others
-		visited[v] = false; // Mark all vertices as unvisited at start
+		double d0 = (v == source_vertex) ? 0.0 : INFINITE_DISTANCE;
+		dist[v] = d0;
+		visited[v] = false;
+		minHeap.insert(v, d0);
 	}
 
-	while (true) // Main loop of Dijkstra's algorithm
+	// Main loop — extract/relax until heap is empty
+	while (!minHeap.empty())
 	{
-		const Vertex* u = nullptr;
+		/* Extract vertex with the smallest tentative distance */
+		const Vertex* u = minHeap.peek_Root().first;
+		minHeap.pop_Root();
 
-		// Step 1: Find the unvisited vertex with the smallest known distance
-		for (auto dist_pair : dist)
-		{
-			const Vertex* v = dist_pair.first;
-			if (!visited[v])
-			{
-				if (u == nullptr || dist_pair.second < dist[u])
-					u = v;
-			}
-		}
+		/* Skip obsolete entries (already processed) */
+		if (visited[u])
+			continue;
 
-		// Step 2: If there is no such vertex, or the smallest distance is infinite, stop the loop
-		if (u == nullptr || dist[u] == INFINITE_DISTANCE)
+		/* All remaining vertices are unreachable */
+		if (dist[u] == INFINITE_DISTANCE)
 			break;
 
-		visited[u] = true; // Mark current vertex as visited
+		visited[u] = true;
 
-		// Step 3: For each neighbor v of u, try to relax the edge u -> v
-		for (auto u_out_pair : u->Out_Edges)
+		/* Relax outgoing edges of u */
+		for (const auto& edge : u->Out_Edges)
 		{
-			const Vertex* v = u_out_pair.first;
-			double newDist = dist[u] + u_out_pair.second;
+			const Vertex* v = edge.first;
+			double        w = edge.second;
+			double newDist = dist[u] + w;
 
-			// If the current vertex u is unreachable, skip updates
-			if (dist[u] == INFINITE_DISTANCE)
-				newDist = INFINITE_DISTANCE;
-
-			// If the new calculated distance is shorter, update it
-			if (newDist < dist[v])
+			if (newDist < dist[v])              // shorter path found
+			{
 				dist[v] = newDist;
+				if (!visited[v])                // v is still in the heap
+					minHeap.changeValue(v, newDist);
+			}
 		}
 	}
 
-	// Step 4: Convert the distance map to a vector in the same order as m_vertices
-	std::vector<double> dist_vec;
-	dist_vec.reserve(size());
-	for (auto v : m_vertices)
-	{
-		dist_vec.push_back(dist[v]);
-	}
+	// Convert distance map to vector aligned with m_vertices order
+	std::vector<double> distVec;
+	distVec.reserve(size());
+	for (const Vertex* v : m_vertices)
+		distVec.push_back(dist[v]);
 
-	return dist_vec;
+	return distVec;
 }
+
 
 
 std::vector<double> Graph::Bellman_Ford(const std::string& source) const
@@ -846,67 +851,89 @@ std::vector<std::vector<double>> Graph::Floyd_Warshall() const
 
 std::vector<std::vector<double>> Graph::Johnson() const
 {
-
+	// Make a deep copy of the current graph (we will modify the copy)
 	Graph copy_of_this(*this);
-	std::unordered_map<Vertex*, int> VertexToIndex;
+
+	std::unordered_map<Vertex*, int> VertexToIndex; // Map each vertex to its index
 	int Vertecies_size = copy_of_this.m_vertices.size();
-	std::vector<std::vector<double>> dist;
+
+	std::vector<std::vector<double>> dist; // Final distance matrix
+
+	// Step 1: Add a new source vertex 's' connected to every vertex with weight 0
 	Vertex* Vertex_s = copy_of_this.AddVertex("_Johnson_Source_");
-	Vertecies_size++;
+	Vertecies_size++; // Account for the new vertex
+
+	// Map vertices to indices and connect 's' to all other vertices
 	for (int i = 0; i < Vertecies_size; i++)
 	{
 		VertexToIndex[copy_of_this.m_vertices[i]] = i;
+
 		if (copy_of_this.m_vertices[i] != Vertex_s)
 		{
-			//Connect s to any other vertex with the weigth 0
-			copy_of_this.ConnectEdge(Vertex_s->name, copy_of_this.m_vertices[i]->name, 0);
+			// Connect s -> v with weight 0
+			copy_of_this.ConnectEdge(Vertex_s->name,
+				copy_of_this.m_vertices[i]->name,
+				0);
 		}
 	}
 
+	// Step 2: Run Bellman-Ford from the new source to get potential h(v)
 	std::vector<double> h = copy_of_this.Bellman_Ford(Vertex_s->name);
-	if (h.size() <= 1)//cycle detected!
-	{
-		return {};
-	}
-	
-	int idx_s = VertexToIndex[Vertex_s];  
-	copy_of_this.RemoveVertex(Vertex_s->name);
-	h.erase(h.begin() + idx_s);
 
+	// If Bellman-Ford detected a negative cycle, abort (returns {0.0})
+	if (h.size() <= 1)
+	{
+		return {}; // Return empty distance matrix
+	}
+
+	// Remove the added source vertex from the graph and adjust arrays
+	int idx_s = VertexToIndex[Vertex_s];
+	copy_of_this.RemoveVertex(Vertex_s->name); // Remove vertex 's'
+	h.erase(h.begin() + idx_s);               // Remove h(s)
+
+	// Rebuild the VertexToIndex mapping without 's'
 	VertexToIndex.clear();
 	for (int i = 0; i < copy_of_this.m_vertices.size(); i++)
 	{
 		VertexToIndex[copy_of_this.m_vertices[i]] = i;
 	}
 
+	Vertecies_size--; // Adjust vertex count after removing 's'
 
-	Vertecies_size--;
+	// Step 3: Reweight every edge using h(u) and h(v)
+	// w'(u,v) = w(u,v) + h(u) - h(v)
 	for (Vertex* u_vertex : copy_of_this.m_vertices)
 	{
 		for (auto& u_out_pair : u_vertex->Out_Edges)
 		{
 			int u = VertexToIndex[u_vertex];
 			int v = VertexToIndex[u_out_pair.first];
+
 			u_out_pair.second = u_out_pair.second + h[u] - h[v];
-			//| w'(u, v) = w(u, v) + h(u) - h(v) | -> [ new weigth ]
 		}
 	}
+
+	// Step 4: Run Dijkstra from each vertex on the reweighted graph
 	dist.reserve(Vertecies_size);
 
 	for (int u = 0; u < Vertecies_size; u++)
 	{
 		Vertex* u_vertex = copy_of_this.m_vertices[u];
+
+		// Dijkstra gives shortest paths with non‑negative weights
 		dist.push_back(copy_of_this.Dijastra(u_vertex->name));
+
+		// Convert distances back to original weights
+		// d(u,v) = d'(u,v) - h(u) + h(v)
 		for (int v = 0; v < Vertecies_size; v++)
 		{
-			if (dist[u][v] == INFINITE_DISTANCE)continue;
+			if (dist[u][v] == INFINITE_DISTANCE) continue;
+
 			dist[u][v] = dist[u][v] - h[u] + h[v];
-			//| d(u, v) = d'(u, v) - h(u) + h(v) | -> [ jump to the old dist ]
 		}
 	}
 
-	
-	return dist;
+	return dist; // Return all‑pairs shortest path matrix
 }
 
 
